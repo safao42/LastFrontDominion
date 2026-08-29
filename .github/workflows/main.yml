@@ -1,0 +1,48 @@
+name: Build Last Front APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Projekt laden
+        uses: actions/checkout@v4
+
+      - name: Java 17 einrichten
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Android SDK einrichten
+        uses: android-actions/setup-android@v3
+
+      - name: Android SDK 36 installieren
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Gradle 9.5 einrichten
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.0"
+
+      - name: Spiel entpacken
+        run: |
+          mkdir extracted
+          unzip -q LastFrontDominion_Animated_AndroidProject.zip -d extracted
+          ls -la extracted/LastFrontDominion
+
+      - name: APK bauen
+        working-directory: extracted/LastFrontDominion
+        run: gradle assembleDebug --stacktrace
+
+      - name: APK speichern
+        uses: actions/upload-artifact@v4
+        with:
+          name: LastFrontDominion-APK
+          path: extracted/LastFrontDominion/app/build/outputs/apk/debug/app-debug.apk
